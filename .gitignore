@@ -1,6 +1,7 @@
 .env
 dev_settings
 db.sqlite3
-pdf_tool
 video_tool
 audio_tool
+media
+test*.pdf

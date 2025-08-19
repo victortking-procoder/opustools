@@ -41,8 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'image_tool',
-    'video_tool',
-    'audio_tool',
     'pdf_tool',
     'corsheaders',
     'rest_framework.authtoken',
@@ -96,6 +94,9 @@ DATABASES = {
         'PASSWORD': config("POSTGRES_PASSWORD"),
         'HOST': config("POSTGRES_HOST", default="localhost"),
         'PORT': config("POSTGRES_PORT", default="5432"),
+        'OPTIONS': {
+            "options": "-c search_path=public"
+        }
     }
 }
 
@@ -184,6 +185,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://opustools.xyz",
     "http://localhost:3000", # Your React development server URL
     "http://127.0.0.1:3000", # Common alternative for localhost
+    "https://api.opustools.xyz",
     # Add any other origins your frontend might be hosted on, e.g., if you use a specific IP
 ]
 
@@ -239,3 +241,31 @@ SERVER_EMAIL = EMAIL_HOST_USER
 
 # SITE_ID for Django's sites framework (used by Djoser for full URLs in emails)
 SITE_ID = 1
+
+# --- NEW SETTINGS FOR PROXY/SSL/CSRF HANDLING ---
+# Tells Django that it's behind an SSL-terminating proxy
+# This is CRUCIAL when Nginx handles HTTPS and proxies to Gunicorn (HTTP)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Ensures CSRF cookie is only sent over HTTPS
+CSRF_COOKIE_SECURE = True
+
+# Ensures session cookie is only sent over HTTPS
+SESSION_COOKIE_SECURE = True
+
+# Ensures CSRF cookie is only accessible via HTTP(S) requests, not JavaScript
+CSRF_COOKIE_HTTPONLY = False
+
+# Ensures session cookie is only accessible via HTTP(S) requests, not JavaScript
+SESSION_COOKIE_HTTPONLY = True
+
+# If your frontend and backend are on different subdomains (opustools.xyz vs api.opustools.xyz),
+# you might need to set the cookie domain explicitly to the main domain
+# so cookies are shared across subdomains.
+# For example, if frontend is on opustools.xyz and backend on api.opustools.xyz,
+# setting this to '.opustools.xyz' allows cookies to be read by both.
+# If they are completely separate domains, this might not be needed or desired.
+CSRF_COOKIE_DOMAIN = '.opustools.xyz'
+# SESSION_COOKIE_DOMAIN = '.opustools.xyz'
+
+CSRF_COOKIE_SAMESITE = 'None'

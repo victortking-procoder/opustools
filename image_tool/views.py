@@ -20,7 +20,7 @@ class ImageConversionView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = {
-            'file': request.FILES.get('file'),
+            'uploaded_file': request.FILES.get('uploaded_file'),
             'tool_type': request.data.get('tool_type'),
             'quality': request.data.get('quality'),
             'width': request.data.get('width'),
@@ -36,15 +36,7 @@ class ImageConversionView(APIView):
             uploaded_file_instance = job.uploaded_file
             file_path_relative_to_media_root = uploaded_file_instance.file.name
 
-            process_image_task.delay(
-                job_id=job.id,
-                file_path_relative_to_media_root=file_path_relative_to_media_root,
-                tool_type=job.tool_type,
-                quality=job.quality,
-                width=job.width,
-                height=job.height,
-                target_format=job.target_format
-            )
+            process_image_task.delay(job_id=job.id)
 
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         else:

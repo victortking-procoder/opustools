@@ -27,6 +27,7 @@ urlpatterns = [
     # App-specific
     path('api/image/', include('image_tool.urls')),
     path('api/auth/', include('authentication.urls')),
+    path('api/pdf/', include('pdf_tool.urls')),
 
     # Djoser auth
     path('api/auth/', include('djoser.urls')),
