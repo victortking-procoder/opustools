@@ -35,19 +35,24 @@ class PdfToolJobSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         files_data = validated_data.pop('files', [])
-        
-        # NEW: Handle page_ranges and merge_order from validated data
+
+        # Manually parse merge_order if it arrives as a string
+        merge_order_data = validated_data.pop('merge_order', None)
+        if merge_order_data and isinstance(merge_order_data, str):
+            try:
+                # Load the JSON string into a proper Python list
+                validated_data['merge_order'] = json.loads(merge_order_data)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError({"merge_order": "Invalid JSON format."})
+
         page_ranges = validated_data.pop('page_ranges', None)
-        merge_order = validated_data.pop('merge_order', None)
-        
+
         job = PdfToolJob.objects.create(**validated_data)
-        
-        # Store page_ranges or merge_order as JSON strings if they exist
+
         if page_ranges:
             job.page_ranges = page_ranges
-        if merge_order:
-            job.merge_order = merge_order
         job.save()
+
 
         for file_data in files_data:
             uploaded_file = PdfUploadedFile.objects.create(
@@ -55,5 +60,5 @@ class PdfToolJobSerializer(serializers.ModelSerializer):
                 original_filename=file_data.name
             )
             job.uploaded_files.add(uploaded_file)
-            
+
         return job
