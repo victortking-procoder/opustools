@@ -228,7 +228,9 @@ def process_file_task(self, job_id):
             #    return
 
             # Map original filenames to absolute paths
-            file_path_map = {os.path.basename(path): path for path in source_files_abs_paths}
+            #file_path_map = {os.path.basename(path): path for path in source_files_abs_paths}
+
+            file_path_map = {f.original_filename: os.path.join(settings.MEDIA_ROOT, f.file.name) for f in job.uploaded_files.all()}
 
             pdf_merger = PdfWriter()
             output_filename = "merged_document.pdf"
