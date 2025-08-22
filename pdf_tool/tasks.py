@@ -219,13 +219,13 @@ def process_file_task(self, job_id):
             if not merge_order:
                 raise ValueError("Merge order is required for PDF merging jobs.")
 
-            try:
-                merge_order = json.loads(merge_order)  # ✅ parse string into list
-            except json.JSONDecodeError as e:
-                job.status = 'FAILED'
-                job.error_message = f"Invalid merge_order format: {e}"
-                job.save()
-                return
+            #try:
+            #    merge_order = json.loads(merge_order)  # ✅ parse string into list
+            #except json.JSONDecodeError as e:
+            #    job.status = 'FAILED'
+            #    job.error_message = f"Invalid merge_order format: {e}"
+            #    job.save()
+            #    return
 
             # Map original filenames to absolute paths
             file_path_map = {os.path.basename(path): path for path in source_files_abs_paths}
