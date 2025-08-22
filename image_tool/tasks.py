@@ -36,7 +36,42 @@ def get_pil_format_from_filename(filename):
     # Default to a common format
     return 'JPEG'
 
-@shared_task(bind=True) # bind=True allows access to task instance properties like self.request
+
+def convert_to_rgb_for_jpeg(image_to_convert: Image.Image) -> Image.Image:
+    """
+    Ensure the image is JPEG-compatible.
+    - RGBA/LA: composite on white using the alpha channel
+    - P (palette) with transparency: expand to RGBA then composite on white
+    - Other non-RGB/L modes: convert to RGB
+    """
+    mode = image_to_convert.mode
+
+    # Handle images with explicit alpha
+    if mode in ('RGBA', 'LA'):
+        background = Image.new('RGB', image_to_convert.size, (255, 255, 255))
+        alpha = image_to_convert.split()[-1]
+        background.paste(image_to_convert, (0, 0), alpha)
+        return background
+
+    # Handle palette images that may carry transparency
+    if mode == 'P':
+        if 'transparency' in image_to_convert.info:
+            rgba = image_to_convert.convert('RGBA')
+            background = Image.new('RGB', rgba.size, (255, 255, 255))
+            alpha = rgba.split()[-1]
+            background.paste(rgba, (0, 0), alpha)
+            return background
+        else:
+            return image_to_convert.convert('RGB')
+
+    # Convert any other incompatible modes (e.g., CMYK, I, F) to RGB
+    if mode not in ('RGB', 'L'):
+        return image_to_convert.convert('RGB')
+
+    return image_to_convert
+
+
+@shared_task(bind=True)  # bind=True allows access to task instance properties like self.request
 def process_image_task(self, job_id):
     """
     Celery task to handle all operations for the image_tool based on the 'tool_type'.
@@ -71,7 +106,7 @@ def process_image_task(self, job_id):
             os.makedirs(os.path.join(settings.MEDIA_ROOT, output_dir_relative_to_media_root), exist_ok=True)
             
             base_filename = os.path.splitext(os.path.basename(file_path_relative_to_media_root))[0]
-            download_url = None # Initialize download URL to None
+            download_url = None  # Initialize download URL to None
 
             if tool_type == 'image_resizer':
                 # --- Resizing Logic ---
@@ -95,11 +130,9 @@ def process_image_task(self, job_id):
                 output_filename = f"resized_{base_filename}.{output_format.lower()}"
                 output_full_absolute_path = os.path.join(settings.MEDIA_ROOT, output_dir_relative_to_media_root, output_filename)
                 
-                # Handle transparency if converting to JPEG
-                if output_format == 'JPEG' and processed_img.mode == 'RGBA':
-                    background = Image.new('RGB', processed_img.size, (255, 255, 255))
-                    background.paste(processed_img, (0, 0), processed_img)
-                    processed_img = background
+                # Handle JPEG compatibility (covers RGBA/LA/P/others)
+                if output_format == 'JPEG':
+                    processed_img = convert_to_rgb_for_jpeg(processed_img)
 
                 # Save the resized image
                 processed_img.save(output_full_absolute_path, format=output_format)
@@ -136,7 +169,7 @@ def process_image_task(self, job_id):
                         logger.warning("pngquant not found. Falling back to Pillow PNG compression.")
                         processed_img.save(output_full_absolute_path, format='PNG', optimize=True)
                     except subprocess.CalledProcessError as e:
-                        logger.error(f"pngquant command failed with error: {e.stderr.decode()}. Falling back to Pillow.")
+                        logger.error(f"pngquant command failed with error: {getattr(e, 'stderr', b'').decode(errors='ignore')}. Falling back to Pillow.")
                         processed_img.save(output_full_absolute_path, format='PNG', optimize=True)
                 else:
                     # Compression for other formats using Pillow
@@ -145,11 +178,9 @@ def process_image_task(self, job_id):
                     if quality is not None:
                         save_params['quality'] = quality
                     
-                    # Handle transparency if converting to JPEG
-                    if output_format == 'JPEG' and processed_img.mode == 'RGBA':
-                        background = Image.new('RGB', processed_img.size, (255, 255, 255))
-                        background.paste(processed_img, (0, 0), processed_img)
-                        processed_img = background
+                    # Ensure JPEG-compatibility (covers RGBA/LA/P/others)
+                    if output_format == 'JPEG':
+                        processed_img = convert_to_rgb_for_jpeg(processed_img)
 
                     processed_img.save(output_full_absolute_path, format=output_format, **save_params)
                 
@@ -181,11 +212,9 @@ def process_image_task(self, job_id):
                 output_filename = f"converted_{base_filename}.{target_format_lower}"
                 output_full_absolute_path = os.path.join(settings.MEDIA_ROOT, output_dir_relative_to_media_root, output_filename)
                 
-                # Handle transparency if converting to JPEG
-                if output_format == 'JPEG' and processed_img.mode == 'RGBA':
-                    background = Image.new('RGB', processed_img.size, (255, 255, 255))
-                    background.paste(processed_img, (0, 0), processed_img)
-                    processed_img = background
+                # Ensure JPEG-compatibility (covers RGBA/LA/P/others)
+                if output_format == 'JPEG':
+                    processed_img = convert_to_rgb_for_jpeg(processed_img)
 
                 # Save the converted image
                 processed_img.save(output_full_absolute_path, format=output_format)
