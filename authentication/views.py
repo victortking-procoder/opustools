@@ -8,6 +8,12 @@ from django.contrib.auth import login, logout, get_user_model
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 from django.middleware.csrf import get_token
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from .tasks import send_password_reset_email
+from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+
 User = get_user_model() # Get the currently active user model
 
 class RegisterView(generics.CreateAPIView):
@@ -81,3 +87,51 @@ class GetCSRFToken(APIView):
     def get(self, request, format=None):
         csrf_token = get_token(request)
         return Response({'csrfToken': csrf_token}, status=status.HTTP_200_OK)
+    
+
+class PasswordResetRequestView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PasswordResetRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        User = get_user_model()
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            # Generate token and UID
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            # Dispatch email sending to Celery
+            send_password_reset_email.delay(user.id, uid, token)
+
+        # Always return a success message to prevent user enumeration
+        return Response(
+            {"detail": "If an account with this email exists, a password reset link has been sent."},
+            status=status.HTTP_200_OK
+        )
+
+class PasswordResetConfirmView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            uid = force_str(urlsafe_base64_decode(data['uid']))
+            user = get_user_model().objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, data['token']):
+            user.set_password(data['new_password'])
+            user.save()
+            return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "Invalid token or user ID."}, status=status.HTTP_400_BAD_REQUEST)
