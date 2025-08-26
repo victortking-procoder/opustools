@@ -5,3 +5,10 @@ video_tool
 audio_tool
 media
 test*.pdf
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore Django migrations everywhere
+**/migrations/
