@@ -3,8 +3,12 @@ dev_settings
 db.sqlite3
 video_tool
 audio_tool
+venv
+celerybeat-schedule
+gunicorn*
+test*
+static
 media
-test*.pdf
 # Ignore Python cache
 __pycache__/
 *.py[cod]
