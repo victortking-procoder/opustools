@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from ckeditor.fields import RichTextField
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -35,7 +36,7 @@ class Post(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     excerpt = models.CharField(max_length=300, blank=True)
-    content = models.TextField()  # Markdown source
+    content = RichTextField()
     cover_image = models.ImageField(upload_to='blog/', blank=True, null=True)
 
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='posts')

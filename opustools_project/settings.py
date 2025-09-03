@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_celery_beat',
     'django_filters',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -278,3 +280,12 @@ CSRF_COOKIE_DOMAIN = '.opustools.xyz'
 # SESSION_COOKIE_DOMAIN = '.opustools.xyz'
 
 CSRF_COOKIE_SAMESITE = 'None'
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "full",
+        "height": 300,
+        "width": "100%",
+    },
+}
