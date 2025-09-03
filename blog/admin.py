@@ -1,5 +1,8 @@
 from django.contrib import admin
 from .models import Category, Tag, Post
+from django.db import models
+from ckeditor.widgets import CKEditorWidget
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -15,6 +18,9 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
+    formfield_overrides = {
+        models.TextField: {"widget": CKEditorWidget()},
+    }
     list_display = ('title', 'status', 'published_at')
     list_filter = ('status', 'category', 'tags')
     search_fields = ('title', 'excerpt', 'content')
