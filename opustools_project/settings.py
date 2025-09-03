@@ -281,11 +281,17 @@ CSRF_COOKIE_DOMAIN = '.opustools.xyz'
 
 CSRF_COOKIE_SAMESITE = 'None'
 
+# --- CKEditor Configuration --- #
+CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_CONFIGS = {
-    "default": {
-        "toolbar": "full",
-        "height": 300,
-        "width": "100%",
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'uploadimage',
+            'codesnippet'
+        ]),
     },
 }

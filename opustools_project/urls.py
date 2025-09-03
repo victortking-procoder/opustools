@@ -29,6 +29,8 @@ urlpatterns = [
     path('api/auth/', include('authentication.urls')),
     path('api/pdf/', include('pdf_tool.urls')),
     path('api/blog/', include('blog.urls')),
+
+    path('ckeditor/', include('ckeditor_uploader.urls')),
 ]
 
 # Serve media files in development

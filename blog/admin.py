@@ -18,9 +18,6 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        models.TextField: {"widget": CKEditorWidget()},
-    }
     list_display = ('title', 'status', 'published_at')
     list_filter = ('status', 'category', 'tags')
     search_fields = ('title', 'excerpt', 'content')
