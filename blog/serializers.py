@@ -28,5 +28,11 @@ class PostSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
 
+    def get_cover_image(self, obj):
+        request = self.context.get('request')
+        if obj.cover_image and hasattr(obj.cover_image, 'url'):
+            return request.build_absolute_uri(obj.cover_image.url)
+        return None
+
     def get_content_html(self, obj):
         return markdown.markdown(obj.content, extensions=["fenced_code", "codehilite"])
