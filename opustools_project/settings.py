@@ -211,27 +211,6 @@ CSRF_TRUSTED_ORIGINS = [
     # Add other trusted origins
 ]
 
-# DJOSER Configuration (NEW)
-DJOSER = {
-    'PASSWORD_RESET_CONFIRM_URL': 'reset-password/{uid}/{token}', # Frontend URL for password reset confirmation
-    'USERNAME_RESET_CONFIRM_URL': 'username-reset/{uid}/{token}', # You can ignore this if not implementing username reset
-    'ACTIVATION_URL': 'activate/{uid}/{token}', # You can ignore this if not implementing email activation
-    'SEND_ACTIVATION_EMAIL': False, # Set to True if you want email activation
-    'SEND_CONFIRMATION_EMAIL': False, # Set to True to send a confirmation email on registration
-    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': False, # Good for dev, consider False in prod for security
-    'SERIALIZERS': {
-        'user_create': 'authentication.serializers.RegisterSerializer', # Use your existing serializer for registration
-        'user': 'authentication.serializers.UserSerializer', # Use your existing serializer for user retrieval/update
-        # You might need to add specific serializers for Djoser's password reset
-        'password_reset': 'djoser.serializers.SendEmailResetSerializer',
-        'password_reset_confirm': 'djoser.serializers.PasswordResetConfirmSerializer',
-    },
-    'EMAIL': {
-        'password_reset': 'djoser.email.PasswordResetEmail',
-        # You can define custom email classes here if needed
-    },
-}
-
 # EMAIL SETTINGS (MANDATORY FOR PASSWORD RESET)
 # For development, you can use a console backend or a dummy backend
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Prints emails to console
