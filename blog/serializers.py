@@ -1,6 +1,9 @@
 import markdown
 from rest_framework import serializers
 from .models import Category, Tag, Post
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,16 +18,15 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
+    author_username = serializers.ReadOnlyField(source='author.username')
+    cover_image = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
-    content_html = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
-            'id', 'title', 'slug', 'excerpt', 'content',
-            'content_html', 'cover_image', 'category', 'tags',
-            'status', 'published_at', 'created_at', 'updated_at'
+            'id', 'title', 'slug', 'content', 'tags', 'author_username', 
+            'status', 'created_at', 'updated_at', 'cover_image'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
 
@@ -33,6 +35,3 @@ class PostSerializer(serializers.ModelSerializer):
         if obj.cover_image and hasattr(obj.cover_image, 'url'):
             return request.build_absolute_uri(obj.cover_image.url)
         return None
-
-    def get_content_html(self, obj):
-        return markdown.markdown(obj.content, extensions=["fenced_code", "codehilite"])
